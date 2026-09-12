@@ -238,3 +238,72 @@ if __name__ == "__main__":
 
     df_final = calculer_descripteurs_dataframe(df)
     print(df_final.head())
+
+
+
+
+
+import mordred
+from mordred import Calculator, descriptors
+
+import pandas as pd
+
+df_alcohols = pd.read_excel(r'C:\Users\pc\Desktop\project\tutorial_rdkit\alcohols.xlsx')
+df_alcohols.head(10)
+
+
+mol_list_alcohols = []
+for mol in df_alcohols['Smiles']: 
+    mol = Chem.MolFromSmiles(mol)
+    mol = Chem.AddHs(mol)
+    mol_list_alcohols.append(mol)
+
+df_alcohols = pd.concat([df_alcohols, pd.DataFrame(mol_list_alcohols, columns = (['mol']))], axis=1)
+
+df_alcohols.head(10)
+Draw.ToGirdImage(df_alcohols['mol'].tolist[:8] , molPerRow=4, subImgSize=(200, 200) , legend = [ x for x in df_alcohols['Names'] ])
+
+calc = Calculator(descriptors , ignore_3d  = True )
+print(calc.descriptors[:5])
+
+
+df_alcohols['mordred'] = calc.pandas(df_alcohols['mol'])
+
+df_alcohols.head(10)
+valeurs = []
+
+logp = mordred.MoeType.SlogP_VSA(k=1)
+hba = mordred.HydrogenBond.HBondAcceptor()
+
+for mol in df_alcohols['mol']:
+    if mol is None:
+        valeurs.append([None, None])
+        continue
+
+    desc = []
+    desc.append(logp(mol))
+    desc.append(hba(mol))
+    valeurs.append(desc)
+
+final_df = pd.concat(
+    [df_alcohols['Smiles'].reset_index(drop=True),
+     pd.DataFrame(valeurs, columns=['logp', 'hba'])],
+    axis=1
+)
+final_df.head()
+
+all_desc = Calculator(descriptors, ignore_3D=True).pandas(df_alcohols["mol"])
+all_desc.head()
+
+mols = df_alcohols["mol"].tolist()[:8]
+legends = df_alcohols["Name"].astype(str).tolist()[:8]
+Draw.MolsToGridImage(
+    mols,
+    molsPerRow=4,
+    subImgSize=(200, 200),
+    legends=legends,
+)
+dia = mordred.GeometricalIndex.Diametr3D()
+
+
+
